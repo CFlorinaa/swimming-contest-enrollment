@@ -1,0 +1,9 @@
+package Repository;
+
+import Model.Participant;
+
+public interface IParticipantRepository extends IRepository<Integer, Participant> {
+    int getId_lastAdd();
+    void save(Participant entity);
+    Participant findByNume_Varsta(String nume,int varsta);
+}
