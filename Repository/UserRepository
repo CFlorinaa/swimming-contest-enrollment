@@ -1,0 +1,89 @@
+package Repository;
+
+import Model.User;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+public class UserRepository implements IUserRepository {
+    private static final Logger logger= LogManager.getLogger();
+    private JdbcUtils dbUtils;
+
+    public UserRepository(Properties props) {
+        logger.traceEntry();
+        dbUtils = new JdbcUtils(props);
+        logger.traceExit();
+    }
+
+    @Override
+    public Iterable<User> findAll() {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        List<User> users=new ArrayList<>();
+        try(PreparedStatement preStmt=con.prepareStatement("select * from USERS")) {
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    String username = result.getString("username");
+                    String password = result.getString("password");
+                    User u=new User(username,password);
+                    users.add(u);
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return users;
+    }
+
+    @Override
+    public User findOne(String ID) {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select * from USERS where username=?")) {
+            preStmt.setString(1,ID);
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    String username = result.getString("username");
+                    String password = result.getString("password");
+                    User u=new User(username,password);
+                    return u;
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return null;
+    }
+
+    @Override
+    public int size() {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select count(*) as [SIZE] from USERS")) {
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    return result.getInt("SIZE");
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return 0;
+    }
+}
