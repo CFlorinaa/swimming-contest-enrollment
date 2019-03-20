@@ -1,0 +1,80 @@
+package Model;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class Participant implements HasID<Integer> {
+    private static final Logger logger= LogManager.getLogger();
+    private int id;
+    private String nume;
+    private int varsta;
+
+    public Participant() {
+        logger.traceEntry();
+        logger.traceExit();
+    }
+
+    public String getNume() {
+        logger.traceEntry();
+        logger.traceExit();
+        return nume;
+    }
+
+    public void setNume(String nume) {
+        logger.traceEntry();
+        logger.traceExit();
+        this.nume = nume;
+    }
+
+    public int getVarsta() {
+        logger.traceEntry();
+        logger.traceExit();
+        return varsta;
+    }
+
+    public void setVarsta(int varsta) {
+        logger.traceEntry();
+        logger.traceExit();
+        this.varsta = varsta;
+    }
+
+    public Participant(String nume, int varsta) {
+        logger.traceEntry();
+        this.nume = nume;
+        this.varsta = varsta;
+        logger.traceExit();
+    }
+
+    public Participant(int id, String nume, int varsta) {
+        logger.traceEntry();
+        this.id = id;
+        this.nume = nume;
+        this.varsta = varsta;
+        logger.traceExit();
+    }
+
+    @Override
+    public void setId(Integer integer) {
+        logger.traceEntry();
+        this.id=integer;
+        logger.traceExit();
+    }
+
+    @Override
+    public Integer getId() {
+        logger.traceEntry();
+        logger.traceExit();
+        return id;
+    }
+
+    @Override
+    public String toString() {
+        logger.traceEntry();
+        logger.traceExit();
+        return "Participant{" +
+                "id=" + id +
+                ", nume='" + nume + '\'' +
+                ", varsta=" + varsta +
+                '}';
+    }
+}
