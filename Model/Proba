@@ -1,0 +1,90 @@
+package Model;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class Proba implements HasID<Integer>{
+    private static final Logger logger= LogManager.getLogger();
+    private Stil s;
+    private Distanta d;
+    private int id;
+    private int nrPart;
+
+    public Proba(Stil s, Distanta d, int nrPart) {logger.traceEntry();
+
+        this.s = s;
+        this.d = d;
+        this.nrPart = nrPart;
+        logger.traceExit();
+    }
+
+    public int getNrPart() {
+        logger.traceEntry();
+        logger.traceExit();
+        return nrPart;
+    }
+
+    public void setNrPart(int nrPart) {
+        logger.traceEntry();
+        this.nrPart = nrPart;
+        logger.traceExit();
+    }
+
+    public Proba(Stil s, Distanta d, int id, int nr) {
+        logger.traceEntry();
+        this.s = s;
+        this.d = d;
+        this.id = id;
+        this.nrPart=nr;
+        logger.traceExit();
+    }
+
+    public Stil getS() {
+        logger.traceEntry();
+        logger.traceExit();
+        return s;
+    }
+
+    public void setS(Stil s) {
+        logger.traceEntry();
+        this.s = s;
+        logger.traceExit();
+    }
+
+    public Distanta getD()
+    {
+        logger.traceEntry();
+        logger.traceExit();
+        return d;
+    }
+
+    public void setD(Distanta d) {
+        logger.traceEntry();
+        this.d = d;
+        logger.traceExit();
+    }
+
+    @Override
+    public Integer getId() {
+        logger.traceEntry();
+        logger.traceExit();
+        return id;
+    }
+
+    @Override
+    public void setId(Integer id) {
+        logger.traceEntry();
+        this.id=id;
+        logger.traceExit();
+    }
+
+    @Override
+    public String toString() {
+        return "Proba{" +
+                "s=" + s +
+                ", d=" + d +
+                ", id=" + id +
+                ", nrPart=" + nrPart +
+                '}';
+    }
+}
