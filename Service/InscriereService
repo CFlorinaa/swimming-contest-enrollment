@@ -1,0 +1,83 @@
+package Service;
+
+import Model.Inscriere;
+import Model.Participant;
+import Model.Proba;
+import Repository.IInscriereRepository;
+import Repository.IParticipantRepository;
+import Repository.IProbaRepository;
+import Utils.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class InscriereService implements IInscriereService, Observable {
+    IInscriereRepository repoI;
+    IProbaRepository repoP;
+
+    public InscriereService(IInscriereRepository repoI,IProbaRepository repoP) {
+        this.repoI = repoI;
+        this.repoP=repoP;
+    }
+
+    @Override
+    public List<Participant> getParticipantiFromProba(int idProba) {
+        return repoI.getParticipantiFromProba(idProba);
+    }
+
+    @Override
+    public List<Proba> getProbeFromParticipant(int idParticipant) {
+        return repoI.getProbeFromParticipant(idParticipant);
+    }
+    public String schimbaDistantaDenumire(String old){
+        String schimbaDist=old.substring(1);
+        schimbaDist+='m';
+        return schimbaDist;
+    }
+    public String schimbaDistanta(String old){
+        String schimbaDist="m";
+        schimbaDist+=old.substring(0,old.length()-1);
+        return schimbaDist;
+    }
+
+    @Override
+    public void save(List<Proba> l, Participant p) {
+        repoI.save(l,p);
+        notifyObservers();
+    }
+
+    @Override
+    public Iterable<Inscriere> findAll() {
+        return repoI.findAll();
+    }
+
+    @Override
+    public Inscriere findOne(Pair<Integer, Integer> integerIntegerPair) {
+        return repoI.findOne(integerIntegerPair);
+    }
+
+    @Override
+    public int size() {
+        return repoI.size();
+    }
+
+    @Override
+    public Iterable<Proba> getProbe(){
+        return repoP.findAll();
+    }
+
+    private List<Observer> observers=new ArrayList<>();
+    @Override
+    public void addObserver(Observer e){
+        observers.add(e);
+    }
+    @Override
+    public void removeObserver(Observer e) {
+        observers.remove(e);
+    }
+
+    @Override
+    public void notifyObservers() {
+        observers.forEach(o->o.update());
+    }
+}
