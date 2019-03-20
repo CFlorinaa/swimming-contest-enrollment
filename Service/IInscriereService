@@ -1,0 +1,22 @@
+/package Service;
+
+import Model.Inscriere;
+import Model.Participant;
+import Model.Proba;
+import Utils.Observer;
+import Utils.Pair;
+
+import java.util.List;
+
+public interface IInscriereService extends IService<Pair<Integer,Integer>, Inscriere> {
+
+    List<Participant> getParticipantiFromProba(int idProba);
+    List<Proba> getProbeFromParticipant(int idParticipant);
+    void save(List<Proba> l,Participant p);
+    Iterable<Proba> getProbe();
+    String schimbaDistantaDenumire(String old);
+    String schimbaDistanta(String old);
+    void addObserver(Observer e);
+    void removeObserver(Observer e);
+    void notifyObservers();
+}
