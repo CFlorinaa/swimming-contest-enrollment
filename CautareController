@@ -1,0 +1,89 @@
+import Model.Participant;
+import Model.Proba;
+import Service.IInscriereService;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+
+public class CautareController {
+    @FXML
+    TableColumn<Proba,Integer> columnIdp;
+    @FXML
+    TableColumn<Participant,String> columnNume;
+    @FXML
+    TableColumn<Participant,Integer> columnVarsta;
+    @FXML
+    TableColumn<Participant,Integer> columnIdpa;
+    @FXML
+    TableColumn<Proba,String> columnStil;
+    @FXML
+    TableColumn<Proba,String> columnDistanta;
+    @FXML
+    TableColumn<Proba,Integer> columnNr;
+    @FXML
+    TableView<Participant> tableParticipanti;
+    @FXML
+    TableView<Proba> tableProbe;
+    @FXML
+    TextField textIdP;
+    @FXML
+    TextField textIdPa;
+    @FXML
+    Button btnCautarePa;
+    @FXML
+    Button btnCautareP;
+    IInscriereService srvi;
+    private final ObservableList<Proba> modelProba = FXCollections.observableArrayList();
+    private final ObservableList<Participant> modelParticipant = FXCollections.observableArrayList();
+    public void initData(IInscriereService srvI){
+        this.srvi=srvI;
+    }
+    private void populateTableProba(int idPa){
+        tableProbe.getItems().clear();
+        modelProba.removeAll();
+        Iterable<Proba> probe=srvi.getProbeFromParticipant(idPa);
+        probe.forEach(modelProba::add);
+        tableProbe.setItems(modelProba);
+    }
+    @FXML
+    public void initialize(){
+        columnIdp.setCellValueFactory(new PropertyValueFactory<Proba,Integer>("id"));
+        columnDistanta.setCellValueFactory(cellData->{
+            Proba current=cellData.getValue();
+            return new ReadOnlyStringWrapper(srvi.schimbaDistantaDenumire(current.getD().toString()));
+        });
+        columnStil.setCellValueFactory(cellData->{
+            Proba current=cellData.getValue();
+            return new ReadOnlyStringWrapper(current.getS().toString());
+        });
+        columnNr.setCellValueFactory(new PropertyValueFactory<Proba,Integer>("nrPart"));
+        columnIdpa.setCellValueFactory(new PropertyValueFactory<Participant,Integer>("id"));
+        columnNume.setCellValueFactory(new PropertyValueFactory<Participant,String>("nume"));
+        columnVarsta.setCellValueFactory(new PropertyValueFactory<Participant,Integer>("varsta"));
+    }
+    private void populateParticipanti(int idP){
+        tableParticipanti.getItems().clear();
+        modelParticipant.removeAll();
+        Iterable<Participant> probe=srvi.getParticipantiFromProba(idP);
+        probe.forEach(modelParticipant::add);
+        tableParticipanti.setItems(modelParticipant);
+    }
+    public void handleParticipanti(ActionEvent actionEvent) {
+        int idP=Integer.parseInt(textIdP.getText());
+        populateParticipanti(idP);
+        textIdP.clear();
+    }
+
+    public void handleProbe(ActionEvent actionEvent) {
+        int idPa=Integer.parseInt(textIdPa.getText());
+        populateTableProba(idPa);
+        textIdPa.clear();
+    }
+}
