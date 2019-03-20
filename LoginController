@@ -1,0 +1,77 @@
+import Model.User;
+import Service.IInscriereService;
+import Service.IUserService;
+import Utils.Observer;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+
+public class LoginController {
+    @FXML
+    Label labelError;
+    @FXML
+    TextField textUsername;
+    @FXML
+    TextField fieldPassword;
+    @FXML
+    Button btnIN;
+    IInscriereService srvi;
+    IUserService srvu;
+
+    @FXML
+    public void initialize(){
+        labelError.setVisible(false);
+    }
+
+    public void setData(IInscriereService srvi,IUserService srvu){
+        this.srvi=srvi;
+        this.srvu=srvu;
+    }
+    private void openInscriere(){
+        try{
+            FXMLLoader loader;
+            loader = new FXMLLoader();
+            loader.setLocation(InscrieriController.class.getResource("inscriere.fxml"));
+            Parent root1= loader.load();
+            InscrieriController ctrl=loader.getController();
+            ctrl.initData(srvi);
+            Stage stage=new Stage();
+            stage.setTitle("INSCRIERE");
+            stage.setScene(new Scene(root1));
+            System.out.println("I'm working");
+            stage.show();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void handleLogIn(ActionEvent actionEvent) {
+        String u=textUsername.getText();
+        String p=fieldPassword.getText();
+        User user=srvu.findOne(u);
+        if(user==null||!user.equals(new User(u,p))){
+            labelError.setVisible(true);
+        }
+        else{
+            labelError.setVisible(false);
+            openInscriere();
+
+        }
+        clearFields();
+    }
+
+    private void clearFields(){
+        textUsername.clear();
+        fieldPassword.clear();
+    }
+}
