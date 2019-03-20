@@ -1,0 +1,9 @@
+package Repository;
+
+import Model.HasID;
+
+public interface IRepository<ID,E extends HasID<ID>> {
+    Iterable<E> findAll();
+    E findOne(ID ID);
+    int size();
+}
