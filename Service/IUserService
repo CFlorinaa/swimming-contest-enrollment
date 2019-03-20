@@ -1,0 +1,6 @@
+package Service;
+
+import Model.User;
+
+public interface IUserService extends IService<String, User> {
+}
