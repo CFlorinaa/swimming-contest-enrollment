@@ -1,0 +1,10 @@
+package Service;
+import Model.HasID;
+import Repository.IRepository;
+
+
+public interface IService <ID,E extends HasID<ID>> {
+    Iterable<E> findAll();
+    E findOne(ID id);
+    int size();
+}
