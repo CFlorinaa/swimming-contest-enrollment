@@ -1,0 +1,207 @@
+import Model.Distanta;
+import Model.Participant;
+import Model.Proba;
+import Model.Stil;
+import Service.IInscriereService;
+import Utils.Observer;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class InscrieriController implements Observer {
+    @FXML
+    TextField textPassword;
+    @FXML
+    Label labelStil;
+    @FXML
+    Label labelDistanta;
+    @FXML
+    Label labelVarsta;
+    @FXML
+    Label labelPrenume;
+    @FXML
+    Label labelNume;
+    @FXML
+    ListView<String> listView;
+    @FXML
+    Button btnAddProba;
+    @FXML
+    TextField textUsername;
+    @FXML
+    Button btnIN;
+    @FXML
+    Button btnOUT;
+    @FXML
+    TextField textNume;
+    @FXML
+    TextField textPrenume;
+    @FXML
+    TextField textVarsta;
+    @FXML
+    RadioButton radio200;
+    @FXML
+    RadioButton radio800;
+    @FXML
+    RadioButton radio1500;
+    @FXML
+    RadioButton radio50;
+    @FXML
+    ChoiceBox<String> choiceStil;
+    @FXML
+    Button btnInscriere;
+    @FXML
+    Button btnCautare;
+    @FXML
+    TableView<Proba> tableView;
+    @FXML
+    TableColumn<Proba,Integer> columnId;
+    @FXML
+    TableColumn<Proba,String> columnStil;
+    @FXML
+    TableColumn<Proba,String> columnDistanta;
+    @FXML
+    TableColumn<Proba,Integer> columnParticipanti;
+    private IInscriereService srvi;
+    private final ObservableList<Proba> modelProba = FXCollections.observableArrayList();
+    public void initData(IInscriereService srv){
+        this.srvi=srv;
+        srvi.addObserver(this);
+        populateList();
+    }
+
+    private void populateList() {
+        tableView.getItems().clear();
+        modelProba.removeAll();
+        Iterable<Proba> probe=srvi.getProbe();
+        probe.forEach(modelProba::add);
+        tableView.setItems(modelProba);
+    }
+
+    private void clearList(){
+        listView.getItems().clear();
+    }
+
+    private String schimbaDistantaDenumire(String old){
+        String schimbaDist=old.substring(1);
+        schimbaDist+='m';
+        return schimbaDist;
+    }
+
+    private void populateStiluriCB(){
+        List<String> stiluri= Stil.GetEnumList();
+        choiceStil.getItems().add("Alege stilul");
+        stiluri.forEach(s -> {
+            choiceStil.getItems().add(s);
+        });
+        choiceStil.getSelectionModel().selectFirst();
+    }
+
+    @FXML
+    public void initialize(){
+        columnId.setCellValueFactory(new PropertyValueFactory<Proba,Integer>("id"));
+        columnDistanta.setCellValueFactory(cellData->{
+            Proba current=cellData.getValue();
+            return new ReadOnlyStringWrapper(srvi.schimbaDistantaDenumire(current.getD().toString()));
+        });
+        columnStil.setCellValueFactory(cellData->{
+            Proba current=cellData.getValue();
+            return new ReadOnlyStringWrapper(current.getS().toString());
+        });
+        columnParticipanti.setCellValueFactory(new PropertyValueFactory<Proba,Integer>("nrPart"));
+        populateStiluriCB();
+    }
+
+    @Override
+    public void update() {
+        populateList();
+    }
+
+    private String radioBtnSelected(){
+        if (radio50.isSelected()){
+            return radio50.getText();
+        }
+        if (radio200.isSelected()){
+            return radio200.getText();
+        }
+        if (radio800.isSelected()){
+            return radio800.getText();
+        }
+        if (radio1500.isSelected()){
+            return radio1500.getText();
+        }
+        return null;
+    }
+
+    public void addProba(ActionEvent actionEvent) {
+        String dist=radioBtnSelected();
+        String stil=choiceStil.getSelectionModel().getSelectedItem();
+        listView.getItems().add(stil+" "+dist);
+        choiceStil.getSelectionModel().selectFirst();
+    }
+
+    private Participant getParticipant(){
+        String nume=textNume.getText();
+        String prenume=textPrenume.getText();
+        int varsta=Integer.parseInt(textVarsta.getText());
+        return new Participant(nume+" "+prenume,varsta);
+    }
+
+    private void clearFields(){
+        textNume.clear();
+        textPrenume.clear();
+        textVarsta.clear();
+        listView.getItems().clear();
+    }
+
+    public void handleInscriere(ActionEvent actionEvent) {
+        Participant part=getParticipant();
+        List<Proba> ProbeAlese = new ArrayList();
+        List<String> words = listView.getItems();
+        words.forEach(w ->{
+            String[] s=w.split(" ");
+            Proba p=new Proba(Stil.valueOf(s[0]),Distanta.valueOf(srvi.schimbaDistanta(s[1])),1);
+            ProbeAlese.add(p);
+        });
+        srvi.save(ProbeAlese,part);
+        clearList();
+        clearFields();
+    }
+
+
+    public void logOut(ActionEvent actionEvent) {
+        Stage stage = (Stage) btnOUT.getScene().getWindow();
+        // do what you have to do
+        stage.close();
+    }
+
+    public void handleCautare(ActionEvent actionEvent) {
+        try{
+            FXMLLoader loader;
+            loader = new FXMLLoader();
+            loader.setLocation(InscrieriController.class.getResource("cautare.fxml"));
+            Parent root2= loader.load();
+            CautareController ctrl=loader.getController();
+            ctrl.initData(srvi);
+            Stage stage=new Stage();
+            stage.setTitle("FILTRARI");
+            stage.setScene(new Scene(root2));
+            System.out.println("I'm working");
+            stage.show();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
