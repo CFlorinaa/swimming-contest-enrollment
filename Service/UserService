@@ -1,0 +1,27 @@
+package Service;
+
+import Model.User;
+import Repository.IUserRepository;
+
+public class UserService implements IUserService {
+    private IUserRepository repoU;
+
+    public UserService(IUserRepository repoU) {
+        this.repoU = repoU;
+    }
+
+    @Override
+    public Iterable<User> findAll() {
+        return repoU.findAll();
+    }
+
+    @Override
+    public User findOne(String s) {
+        return repoU.findOne(s);
+    }
+
+    @Override
+    public int size() {
+        return repoU.size();
+    }
+}
