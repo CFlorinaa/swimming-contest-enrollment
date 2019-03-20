@@ -1,0 +1,15 @@
+package Repository;
+
+import Model.Inscriere;
+import Model.Participant;
+import Model.Proba;
+import Utils.Pair;
+
+import java.util.List;
+
+public interface IInscriereRepository extends IRepository<Pair<Integer,Integer>, Inscriere> {
+    List<Participant> getParticipantiFromProba(int idProba);
+    List<Proba> getProbeFromParticipant(int idParticipant);
+    void save(List<Proba> l,Participant p);
+
+}
