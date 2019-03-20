@@ -1,0 +1,12 @@
+package Repository;
+
+import Model.Distanta;
+import Model.Proba;
+import Model.Stil;
+
+public interface IProbaRepository extends IRepository<Integer, Proba> {
+    Proba findByDistanta_Stil(Distanta d, Stil s);
+    void update(Integer integer, int nr);
+    int getId_lastAdd();
+    void save(Proba entity);
+}
