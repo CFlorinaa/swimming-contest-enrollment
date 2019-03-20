@@ -1,0 +1,173 @@
+package Repository;
+
+import Model.*;
+import Utils.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+public class InscriereRepository implements IInscriereRepository{
+    private static final Logger logger= LogManager.getLogger();
+    private IProbaRepository repoP;
+    private IParticipantRepository repoPa;
+    private JdbcUtils dbUtils;
+    public InscriereRepository(Properties props, IProbaRepository repoP,IParticipantRepository repoPa) {
+        logger.traceEntry();
+        dbUtils = new JdbcUtils(props);
+        this.repoP=repoP;
+        this.repoPa=repoPa;
+        logger.traceExit();
+    }
+    @Override
+    public Iterable<Inscriere> findAll(){
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        List<Inscriere> inscrieri=new ArrayList<>();
+        try(PreparedStatement preStmt=con.prepareStatement("select cod_p , cod_pa from INSCRIERI")) {
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    Integer id_p = result.getInt("cod_p");
+                    Integer id_pa = result.getInt("cod_pa");
+                    Inscriere i=new Inscriere(id_p, id_pa);
+                    inscrieri.add(i);
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return inscrieri;
+    }
+
+    @Override
+    public Inscriere findOne(Pair<Integer,Integer> ID) {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select cod_p ,cod_pa from INSCRIERI where cod_p=? and cod_pa=?")) {
+            preStmt.setInt(1,ID.first());
+            preStmt.setInt(2,ID.second());
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    int id_p = result.getInt("cod_p");
+                    int id_pa = result.getInt("cod_pa");
+                    Inscriere i=new Inscriere(id_p,id_pa);
+                    return i;
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return null;
+    }
+
+    private void save(Inscriere i) {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("insert into INSCRIERI (cod_p, cod_pa) values (?,?)")){
+            preStmt.setInt(1,i.getIdProba());
+            preStmt.setInt(2,i.getIdParticipant());
+            int result=preStmt.executeUpdate();
+        }catch (SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+    }
+
+    public List<Participant> getParticipantiFromProba(int idProba){
+        logger.traceEntry();
+        List<Participant> participanti=new ArrayList<>();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select cod_pa from INSCRIERI where cod_p=?")) {
+            preStmt.setInt(1,idProba);
+            try(ResultSet result = preStmt.executeQuery()) {
+                while (result.next()) {
+                    int idP=result.getInt("cod_pa");
+                    Participant p=repoPa.findOne(idP);
+                    participanti.add(p);
+                }
+            }
+        }catch(SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+        return participanti;
+    }
+
+    public List<Proba> getProbeFromParticipant(int idParticipant){
+        logger.traceEntry();
+        List<Proba> probe=new ArrayList<>();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select cod_p from INSCRIERI where cod_pa=?")) {
+            preStmt.setInt(1,idParticipant);
+            try(ResultSet result = preStmt.executeQuery()) {
+                while (result.next()) {
+                    int idP=result.getInt("cod_p");
+                    Proba p=repoP.findOne(idP);
+                    probe.add(p);
+                }
+            }
+        }catch(SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+        return probe;
+    }
+
+    @Override
+    public int size() {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select count(*) as [SIZE] from INSCRIERI")) {
+            try(ResultSet result = preStmt.executeQuery()) {
+                if (result.next()) {
+                    return result.getInt("SIZE");
+                }
+            }
+        }catch(SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+        return 0;
+    }
+
+    public void save(List<Proba> l,Participant p){
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        Participant participant=repoPa.findByNume_Varsta(p.getNume(),p.getVarsta());
+        if(participant==null){
+            repoPa.save(p);
+            p.setId(repoPa.getId_lastAdd());
+        }
+        else {
+            p.setId(participant.getId());
+        }
+        int participantId=p.getId();
+        l.forEach(proba -> {
+            Proba p1=repoP.findByDistanta_Stil(proba.getD(),proba.getS());
+            if(p1==null){
+                repoP.save(proba);
+                this.save(new Inscriere(repoP.getId_lastAdd(),participantId));
+            }
+            else {
+                int probaId=p1.getId();
+                if(this.findOne(new Pair<Integer, Integer>(probaId,participantId))==null){
+                    repoP.update(probaId,p1.getNrPart()+1);
+                    this.save(new Inscriere(probaId,participantId));
+                }
+            }
+        });
+        logger.traceExit();
+    }
+}
