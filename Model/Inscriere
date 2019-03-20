@@ -1,0 +1,48 @@
+package Model;
+
+import Utils.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class Inscriere implements HasID<Pair<Integer,Integer>> {
+    private static final Logger logger= LogManager.getLogger();
+    private Pair<Integer,Integer> id;
+
+    public Inscriere(int idProba, int idParticipant) {
+        logger.traceEntry();
+        this.id=new Pair<Integer,Integer>(idProba,idParticipant);
+        logger.traceExit();
+
+    }
+
+    public Inscriere() {
+        logger.traceEntry();
+        logger.traceExit();
+    }
+
+    @Override
+    public void setId(Pair<Integer, Integer> integerIntegerPair) {
+        logger.traceEntry();
+        this.id=integerIntegerPair;
+        logger.traceExit();
+    }
+
+    @Override
+    public Pair<Integer, Integer> getId() {
+
+        logger.traceEntry();
+        logger.traceExit();
+        return this.id;
+    }
+
+    public int getIdProba(){
+        logger.traceEntry();
+        logger.traceExit();
+        return id.first();
+    }
+    public int getIdParticipant(){
+        logger.traceEntry();
+        logger.traceExit();
+        return id.second();
+    }
+}
