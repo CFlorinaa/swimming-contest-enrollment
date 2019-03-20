@@ -1,0 +1,200 @@
+package Repository;
+
+import Model.Distanta;
+import Model.Proba;
+import Model.Stil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+public class ProbaRepository implements IProbaRepository {
+    private static final Logger logger= LogManager.getLogger();
+    private JdbcUtils dbUtils;
+    public ProbaRepository(Properties props) {
+        logger.traceEntry();
+        dbUtils = new JdbcUtils(props);
+        logger.traceExit();
+    }
+    @Override
+    public Iterable<Proba> findAll(){
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        List<Proba> probe=new ArrayList<>();
+        try(PreparedStatement preStmt=con.prepareStatement("select cod_p, d.Denumire as cod_d, s.Denumire as cod_s, nr_participanti from PROBE p inner join DISTANTA D on p.cod_d = D.cod_d\n" +
+                "inner join STILURI S on p.cod_s = S.cod_s")) {
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    Integer id = result.getInt("cod_p");
+                    String d = result.getString("cod_d");
+                    String s = result.getString("cod_s");
+                    Integer nr_p = result.getInt("nr_participanti");
+                    Proba p=new Proba(Stil.valueOf(s),Distanta.valueOf(d),id,nr_p);
+                    probe.add(p);
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return probe;
+    }
+
+    @Override
+    public Proba findOne(Integer ID) {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select d.Denumire as cod_d, s.Denumire as cod_s, nr_participanti from PROBE p inner join DISTANTA D on p.cod_d = D.cod_d\n" +
+                "inner join STILURI S on p.cod_s = S.cod_s where cod_p=?")) {
+            preStmt.setInt(1,ID);
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    String d = result.getString("cod_d");
+                    String s = result.getString("cod_s");
+                    Integer nr_p = result.getInt("nr_participanti");
+                    Proba p=new Proba(Stil.valueOf(s),Distanta.valueOf(d),ID,nr_p);
+                    /*p.setId(ID);
+                    p.setD();
+                    p.setS();
+                    p.setNrPart();*/
+                    return p;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error DB "+e);
+        }
+        logger.traceExit();
+        return null;
+    }
+
+    public Proba findByDistanta_Stil(Distanta d,Stil s) {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select cod_p , nr_participanti from PROBE where cod_d=? and cod_s=?")) {
+            preStmt.setInt(1,this.getCodDistanta(d));
+            preStmt.setInt(2,this.getCodStil(s));
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    int id = result.getInt("cod_p");
+                    int nr_p = result.getInt("nr_participanti");
+                    Proba p=new Proba(s,d,id,nr_p);
+                    return p;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error DB "+e);
+        }
+        logger.traceExit();
+        return null;
+    }
+
+    private int getCodStil(Stil s){
+        logger.traceEntry();
+        int stil=0;
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select cod_s " +
+                "from STILURI " +
+                "where Denumire=?")) {
+            preStmt.setString(1,s.name());
+            try(ResultSet result=preStmt.executeQuery()) {
+                while(result.next()){
+                    stil = result.getInt("cod_s");
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return stil;
+    }
+
+    private int getCodDistanta(Distanta distanta){
+        logger.traceEntry();
+        int d=0;
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select cod_d from DISTANTA " +
+                "where Denumire=?")) {
+            preStmt.setString(1,distanta.name());
+            try(ResultSet result=preStmt.executeQuery()) {
+                while(result.next()){
+                    d=result.getInt("cod_d");
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return d;
+    }
+
+    @Override
+    public void save(Proba entity) {
+        logger.traceEntry();
+        int d=this.getCodDistanta(entity.getD());
+        int s=this.getCodStil(entity.getS());
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("insert into PROBE (cod_d, cod_s,nr_participanti) values (?,?,?)")){
+            preStmt.setInt(1,d);
+            preStmt.setInt(2,s);
+            preStmt.setInt(3,entity.getNrPart());
+            int result=preStmt.executeUpdate();
+        }catch (SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+    }
+
+    public void update(Integer integer, int nr) {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("update PROBE " +
+                "set nr_participanti=?" +
+                "where cod_p=?")){
+            preStmt.setInt(1,nr);
+            preStmt.setInt(2,integer);
+            int result=preStmt.executeUpdate();
+        }catch (SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+    }
+
+    @Override
+    public int size() {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select count(*) as [SIZE] from PROBE")) {
+            try(ResultSet result = preStmt.executeQuery()) {
+                if (result.next()) {
+                    return result.getInt("SIZE");
+                }
+            }
+        }catch(SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+        return 0;
+    }
+
+    public int getId_lastAdd(){
+        List<Proba> lista=
+                StreamSupport.stream(this.findAll().spliterator(),false )
+                        .collect(Collectors.toList());
+        Proba lastProba=lista.get(lista.size()-1);
+        return lastProba.getId();
+    }
+}
