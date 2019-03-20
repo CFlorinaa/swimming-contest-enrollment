@@ -1,0 +1,131 @@
+package Repository;
+
+import Model.Participant;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+public class ParticipantRepository implements IParticipantRepository {
+    private static final Logger logger= LogManager.getLogger();
+    private JdbcUtils dbUtils;
+    public ParticipantRepository(Properties props) {
+        logger.traceEntry();
+        dbUtils = new JdbcUtils(props);
+        logger.traceExit();
+    }
+    @Override
+    public Iterable<Participant> findAll(){
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        List<Participant> participanti=new ArrayList<>();
+        try(PreparedStatement preStmt=con.prepareStatement("select * from PARTICIPANTI ")) {
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    Integer id = result.getInt("cod_pa");
+                    String nume = result.getString("nume");
+                    Integer v = result.getInt("varsta");
+                    Participant p=new Participant(id,nume,v);
+                    participanti.add(p);
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return participanti;
+    }
+
+    @Override
+    public Participant findOne(Integer ID) {
+        logger.traceEntry();
+        Participant p=new Participant();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select nume,varsta from PARTICIPANTI where cod_pa=?")) {
+            preStmt.setInt(1,ID);
+            try(ResultSet result=preStmt.executeQuery()) {
+                while (result.next()) {
+                    String n = result.getString("nume");
+                    Integer v = result.getInt("varsta");
+                    p.setId(ID);
+                    p.setNume(n);
+                    p.setVarsta(v);
+                }
+            }
+        } catch (SQLException e) {
+            //logger.error(e);
+            System.out.println("Error DB "+e);
+        }
+        //logger.traceExit(participanti);
+        logger.traceExit();
+        return p;
+    }
+
+    @Override
+    public void save(Participant entity) {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("insert into PARTICIPANTI (nume, varsta) values (?,?)")){
+            preStmt.setString(1,entity.getNume());
+            preStmt.setInt(2,entity.getVarsta());
+            int result=preStmt.executeUpdate();
+        }catch (SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+    }
+
+    @Override
+    public int size() {
+        logger.traceEntry();
+        Connection con=dbUtils.getConnection();
+        try(PreparedStatement preStmt=con.prepareStatement("select count(*) as [SIZE] from PARTICIPANTI")) {
+            try(ResultSet result = preStmt.executeQuery()) {
+                if (result.next()) {
+                    return result.getInt("SIZE");
+                }
+            }
+        }catch(SQLException ex){
+            System.out.println("Error DB "+ex);
+        }
+        logger.traceExit();
+        return 0;
+    }
+    public int getId_lastAdd(){
+        List<Participant> lista=
+                StreamSupport.stream(this.findAll().spliterator(),false )
+                        .collect(Collectors.toList());
+        Participant lastParticipant=lista.get(lista.size()-1);
+        return lastParticipant.getId();
+    }
+    public Participant findByNume_Varsta(String nume,int varsta) {
+        logger.traceEntry();
+        Connection con = dbUtils.getConnection();
+        try (PreparedStatement preStmt = con.prepareStatement("select cod_pa from PARTICIPANTI where nume=? and varsta=?")) {
+            preStmt.setString(1, nume);
+            preStmt.setInt(2, varsta);
+            try (ResultSet result = preStmt.executeQuery()) {
+                while (result.next()) {
+                    int id = result.getInt("cod_pa");
+                    Participant p = new Participant(id, nume, varsta);
+                    return p;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error DB " + e);
+        }
+        logger.traceExit();
+        return null;
+    }
+}
+
